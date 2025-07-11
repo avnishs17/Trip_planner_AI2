@@ -14,7 +14,6 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     gcc \
     curl \
-    bash \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -38,9 +37,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
-# Copy startup script
-COPY start.sh .
-RUN chmod +x start.sh
-
-# Run both Flask and FastAPI
-CMD ["./start.sh"]
+# Run both FastAPI backend and Flask frontend
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port 8000 --workers 2 & sleep 5 && gunicorn --bind 0.0.0.0:5000 --workers 3 --timeout 120 flask_app:app"]
