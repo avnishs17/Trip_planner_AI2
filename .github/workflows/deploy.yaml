@@ -11,7 +11,7 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   GKE_CLUSTER: trip
-  GKE_ZONE: us-central1
+  GKE_ZONE: us-central1a
   DEPLOYMENT_NAME: trip-planner
   IMAGE: trip-planner
   ARTIFACT_REGISTRY: trip
