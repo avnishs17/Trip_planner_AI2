@@ -1,0 +1,255 @@
+/* Modern Flask Travel Planner App Styles */
+
+/* Global Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+}
+
+/* Hero Section */
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 4rem 0;
+    margin-bottom: 0;
+}
+
+/* Card Enhancements */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    border-radius: 15px 15px 0 0 !important;
+    border-bottom: none;
+    padding: 1.5rem;
+}
+
+/* Form Enhancements */
+.form-control {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Button Enhancements */
+.btn {
+    border-radius: 10px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+    border: none;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #4e9927 0%, #96d4b5 100%);
+}
+
+/* Travel Plan Content Styling */
+.travel-plan-content {
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+.travel-plan-content h1,
+.travel-plan-content h2,
+.travel-plan-content h3 {
+    color: #2c3e50;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.travel-plan-content h1 {
+    font-size: 2rem;
+    border-bottom: 3px solid #667eea;
+    padding-bottom: 0.5rem;
+}
+
+.travel-plan-content h2 {
+    font-size: 1.6rem;
+    color: #667eea;
+}
+
+.travel-plan-content h3 {
+    font-size: 1.3rem;
+    color: #764ba2;
+}
+
+.travel-plan-content ul,
+.travel-plan-content ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.travel-plan-content li {
+    margin-bottom: 0.5rem;
+}
+
+.travel-plan-content strong {
+    color: #34495e;
+    font-weight: 600;
+}
+
+.travel-plan-content p {
+    margin-bottom: 1.2rem;
+}
+
+/* Better formatting for AI-generated content */
+.travel-plan-content br + br {
+    display: block;
+    margin-top: 1rem;
+}
+
+/* Style for sections that start with ### */
+.travel-plan-content strong[style*="font-size"] {
+    display: block;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-size: 1.4rem !important;
+    color: #667eea;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 0.5rem;
+}
+
+/* Table formatting for AI content */
+.table-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-left: 4px solid #667eea;
+}
+
+.table-row {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e9ecef;
+    font-family: 'Courier New', monospace;
+    font-size: 0.95rem;
+}
+
+.table-row:last-child {
+    border-bottom: none;
+}
+
+/* Feature Cards */
+.feature-card {
+    transition: transform 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+}
+
+/* Navbar Enhancements */
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+/* Loading Spinner */
+.spinner-border {
+    animation: spin 1s linear infinite;
+}
+
+/* Alert Enhancements */
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+/* Footer */
+footer {
+    margin-top: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 2rem 0;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .travel-plan-content {
+        font-size: 1rem;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .navbar,
+    .card-header,
+    .btn,
+    .alert,
+    footer,
+    .modal {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    body {
+        background: white !important;
+    }
+    
+    .travel-plan-content {
+        font-size: 12pt;
+        line-height: 1.6;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+    animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(30px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}

@@ -1,0 +1,200 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trip-planner
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: trip-planner-config
+  namespace: trip-planner
+data:
+  FLASK_ENV: "production"
+  FLASK_DEBUG: "False"
+  FLASK_PORT: "5000"
+  BACKEND_URL: "http://127.0.0.1:8000"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: trip-planner-secrets
+  namespace: trip-planner
+type: Opaque
+data:
+  # These will be base64 encoded values from GitHub secrets
+  GROQ_API_KEY: "" # Will be injected by GitHub Actions
+  OPENAI_API_KEY: "" # Will be injected by GitHub Actions
+  OPENWEATHERMAP_API_KEY: "" # Will be injected by GitHub Actions
+  TAVILY_API_KEY: "" # Will be injected by GitHub Actions
+  EXCHANGE_RATE_API_KEY: "" # Will be injected by GitHub Actions
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trip-planner
+  namespace: trip-planner
+  labels:
+    app: trip-planner
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: trip-planner
+  template:
+    metadata:
+      labels:
+        app: trip-planner
+    spec:
+      containers:
+      - name: trip-planner
+        image: IMAGE_TAG  # This will be replaced by GitHub Actions
+        ports:
+        - containerPort: 5000
+          protocol: TCP
+          name: frontend
+        - containerPort: 8000
+          protocol: TCP
+          name: backend
+        env:
+        - name: FLASK_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: trip-planner-config
+              key: FLASK_ENV
+        - name: FLASK_DEBUG
+          valueFrom:
+            configMapKeyRef:
+              name: trip-planner-config
+              key: FLASK_DEBUG
+        - name: FLASK_PORT
+          valueFrom:
+            configMapKeyRef:
+              name: trip-planner-config
+              key: FLASK_PORT
+        - name: BACKEND_URL
+          valueFrom:
+            configMapKeyRef:
+              name: trip-planner-config
+              key: BACKEND_URL
+        - name: GROQ_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: trip-planner-secrets
+              key: GROQ_API_KEY
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: trip-planner-secrets
+              key: OPENAI_API_KEY
+        - name: OPENWEATHERMAP_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: trip-planner-secrets
+              key: OPENWEATHERMAP_API_KEY
+        - name: TAVILY_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: trip-planner-secrets
+              key: TAVILY_API_KEY
+        - name: EXCHANGE_RATE_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: trip-planner-secrets
+              key: EXCHANGE_RATE_API_KEY
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 5000
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+      securityContext:
+        fsGroup: 1000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: trip-planner-service
+  namespace: trip-planner
+  labels:
+    app: trip-planner
+spec:
+  type: LoadBalancer
+  ports:
+  - port: 80
+    targetPort: 5000
+    protocol: TCP
+    name: http
+  selector:
+    app: trip-planner
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: trip-planner-ingress
+  namespace: trip-planner
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "trip-planner-ip"
+    networking.gke.io/managed-certificates: "trip-planner-ssl"
+    kubernetes.io/ingress.allow-http: "true"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: trip-planner-service
+            port:
+              number: 80
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: trip-planner-hpa
+  namespace: trip-planner
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: trip-planner
+  minReplicas: 2
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

@@ -1,0 +1,86 @@
+name: Build and Deploy to GKE
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GKE_CLUSTER: trip
+  GKE_ZONE: us-central1
+  DEPLOYMENT_NAME: trip-planner
+  IMAGE: trip-planner
+  ARTIFACT_REGISTRY: trip
+  ARTIFACT_REGION: us-central1
+
+jobs:
+  setup-build-publish-deploy:
+    name: Setup, Build, Publish, and Deploy
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Configure Docker to use gcloud as credential helper
+      run: |-
+        gcloud auth configure-docker $ARTIFACT_REGION-docker.pkg.dev
+
+    - name: Get GKE credentials
+      run: |-
+        gcloud container clusters get-credentials "$GKE_CLUSTER" --zone "$GKE_ZONE"
+
+    - name: Build Docker image
+      run: |-
+        docker build -t "$ARTIFACT_REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REGISTRY/$IMAGE:$GITHUB_SHA" .
+
+    - name: Push Docker image to Artifact Registry
+      run: |-
+        docker push "$ARTIFACT_REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REGISTRY/$IMAGE:$GITHUB_SHA"
+
+    - name: Prepare Kubernetes secrets
+      run: |-
+        # Base64 encode secrets for Kubernetes
+        GROQ_API_KEY_B64=$(echo -n "${{ secrets.GROQ_API_KEY }}" | base64 -w 0)
+        OPENAI_API_KEY_B64=$(echo -n "${{ secrets.OPENAI_API_KEY }}" | base64 -w 0)
+        OPENWEATHERMAP_API_KEY_B64=$(echo -n "${{ secrets.OPENWEATHERMAP_API_KEY }}" | base64 -w 0)
+        TAVILY_API_KEY_B64=$(echo -n "${{ secrets.TAVILY_API_KEY }}" | base64 -w 0)
+        EXCHANGE_RATE_API_KEY_B64=$(echo -n "${{ secrets.EXCHANGE_RATE_API_KEY }}" | base64 -w 0)
+        
+        # Replace placeholder secrets in deployment.yaml
+        sed -i "s|GROQ_API_KEY: \"\"|GROQ_API_KEY: \"$GROQ_API_KEY_B64\"|g" kubernetes-deployment.yaml
+        sed -i "s|OPENAI_API_KEY: \"\"|OPENAI_API_KEY: \"$OPENAI_API_KEY_B64\"|g" kubernetes-deployment.yaml
+        sed -i "s|OPENWEATHERMAP_API_KEY: \"\"|OPENWEATHERMAP_API_KEY: \"$OPENWEATHERMAP_API_KEY_B64\"|g" kubernetes-deployment.yaml
+        sed -i "s|TAVILY_API_KEY: \"\"|TAVILY_API_KEY: \"$TAVILY_API_KEY_B64\"|g" kubernetes-deployment.yaml
+        sed -i "s|EXCHANGE_RATE_API_KEY: \"\"|EXCHANGE_RATE_API_KEY: \"$EXCHANGE_RATE_API_KEY_B64\"|g" kubernetes-deployment.yaml
+
+    - name: Deploy to GKE
+      run: |-
+        # Replace IMAGE_TAG in deployment.yaml
+        sed -i "s|IMAGE_TAG|$ARTIFACT_REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REGISTRY/$IMAGE:$GITHUB_SHA|g" kubernetes-deployment.yaml
+        
+        # Apply Kubernetes manifests
+        kubectl apply -f kubernetes-deployment.yaml
+        
+        # Verify deployment
+        kubectl rollout status deployment/$DEPLOYMENT_NAME -n trip-planner
+        
+        # Get service external IP (if LoadBalancer)
+        kubectl get services -n trip-planner -o wide

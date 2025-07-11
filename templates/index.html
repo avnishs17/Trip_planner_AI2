@@ -1,0 +1,442 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8 text-center">
+                <h1 class="display-4 text-white mb-4">
+                    <i class="fas fa-map-marked-alt me-3"></i>
+                    Plan Your Perfect Trip
+                </h1>
+                <p class="lead text-white mb-5">
+                    Let our AI-powered travel assistant help you create amazing travel experiences tailored just for you.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            {% if error %}
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                {{ error }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endif %}
+            
+            <div class="card shadow-lg">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-question-circle me-2"></i>
+                        How can I help you plan your trip?
+                    </h3>
+                </div>
+                <div class="card-body p-4">
+                    <form id="travel-form" method="POST" action="{{ url_for('index') }}">
+                        <div class="mb-4">
+                            <label for="question" class="form-label">
+                                <i class="fas fa-edit me-2"></i>
+                                Tell me about your travel plans:
+                            </label>
+                            <textarea 
+                                class="form-control form-control-lg" 
+                                id="question" 
+                                name="question" 
+                                rows="4" 
+                                placeholder="e.g., Plan a 5-day trip to Goa with a budget of $1000, including beach activities and local cuisine..."
+                                required
+                            ></textarea>
+                            <div class="form-text">
+                                Be as specific as possible about your destination, duration, budget, and preferences for the best results.
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary btn-lg" id="submit-btn">
+                                <i class="fas fa-magic me-2"></i>
+                                Create My Travel Plan
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if show_results %}
+<!-- Travel Plan Results Section -->
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Header -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h3 class="mb-0">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Your Travel Plan is Ready!
+                            </h3>
+                        </div>
+                        <div class="col-auto">
+                            <small>Generated: {{ timestamp }}</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="text-muted mb-1">Your Query:</h6>
+                            <p class="mb-0">"{{ question }}"</p>
+                        </div>
+                        <div class="col-md-4 text-md-end">
+                            {% if saved_file %}
+                            <div class="alert alert-info mb-0" role="alert">
+                                <i class="fas fa-file-download me-2"></i>
+                                <small>Saved as: {{ saved_file }}</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Travel Plan Content -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h4 class="mb-0">
+                                <i class="fas fa-map-marked-alt me-2"></i>
+                                Your Personalized Travel Plan
+                            </h4>
+                        </div>
+                        <div class="col-auto">
+                            <button class="btn btn-outline-primary btn-sm" onclick="copyToClipboard()">
+                                <i class="fas fa-copy me-1"></i>
+                                Copy Plan
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="printPlan()">
+                                <i class="fas fa-print me-1"></i>
+                                Print
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="travel-plan-content" class="travel-plan-content">
+                        {{ answer | safe }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    <a href="{{ url_for('index') }}" class="btn btn-primary btn-lg w-100">
+                        <i class="fas fa-plus me-2"></i>
+                        Plan Another Trip
+                    </a>
+                </div>
+                <div class="col-md-6">
+                    <button class="btn btn-success btn-lg w-100" onclick="shareResults()">
+                        <i class="fas fa-share-alt me-2"></i>
+                        Share This Plan
+                    </button>
+                </div>
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="alert alert-warning mt-4" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Important:</strong> This travel plan was generated by AI. Please verify all information, 
+                especially prices, operating hours, and travel requirements before your trip.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Share Modal -->
+<div class="modal fade" id="shareModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Share Your Travel Plan</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Copy the link below to share your travel plan:</p>
+                <div class="input-group">
+                    <input type="text" class="form-control" id="shareUrl" readonly>
+                    <button class="btn btn-outline-secondary" onclick="copyShareUrl()">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+                    <h5 class="card-title">AI-Powered Planning</h5>
+                    <p class="card-text">Our advanced AI analyzes your preferences to create personalized itineraries.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <i class="fas fa-dollar-sign fa-3x text-success mb-3"></i>
+                    <h5 class="card-title">Budget Optimization</h5>
+                    <p class="card-text">Get cost-effective travel plans that maximize your experience within budget.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 text-center">
+                <div class="card-body">
+                    <i class="fas fa-clock fa-3x text-info mb-3"></i>
+                    <h5 class="card-title">Real-time Information</h5>
+                    <p class="card-text">Access up-to-date weather, pricing, and local information for your destination.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-5">
+                <div class="spinner-border text-primary mb-3" role="status" style="width: 3rem; height: 3rem;">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Planning your perfect trip...</h5>
+                <p class="text-muted">This may take a moment while our AI creates your personalized itinerary.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.travel-plan-content {
+    line-height: 1.8;
+    font-size: 1.1rem;
+}
+
+.travel-plan-content h1,
+.travel-plan-content h2,
+.travel-plan-content h3,
+.travel-plan-content h4 {
+    color: #2c3e50;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+}
+
+.travel-plan-content h1 {
+    font-size: 2.2rem;
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 0.5rem;
+}
+
+.travel-plan-content h2 {
+    font-size: 1.8rem;
+    color: #3498db;
+}
+
+.travel-plan-content h3 {
+    font-size: 1.4rem;
+    color: #2980b9;
+}
+
+.travel-plan-content ul,
+.travel-plan-content ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.travel-plan-content li {
+    margin-bottom: 0.5rem;
+}
+
+.travel-plan-content strong {
+    color: #34495e;
+    font-weight: 600;
+}
+
+.travel-plan-content em {
+    color: #7f8c8d;
+    font-style: italic;
+}
+
+.travel-plan-content p {
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+.travel-plan-content table {
+    margin: 1.5rem 0;
+    width: 100%;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.travel-plan-content table th {
+    background-color: #3498db;
+    color: white;
+    font-weight: 600;
+    padding: 12px 15px;
+    text-align: left;
+    border: none;
+}
+
+.travel-plan-content table td {
+    padding: 12px 15px;
+    border-top: 1px solid #ecf0f1;
+    vertical-align: middle;
+}
+
+.travel-plan-content table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+.travel-plan-content table tr:hover {
+    background-color: #e3f2fd;
+    transition: background-color 0.3s ease;
+}
+
+.travel-plan-content hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(to right, #3498db, #2980b9, #3498db);
+    margin: 2rem 0;
+    border-radius: 2px;
+}
+
+.travel-plan-content code {
+    background-color: #f1f2f6;
+    color: #2f3542;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9em;
+}
+
+@media print {
+    .card-header,
+    .btn,
+    .alert,
+    nav,
+    footer {
+        display: none !important;
+    }
+    
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+    
+    .travel-plan-content table {
+        box-shadow: none !important;
+        border: 1px solid #ddd;
+    }
+}
+
+@media (max-width: 768px) {
+    .travel-plan-content {
+        font-size: 1rem;
+    }
+    
+    .travel-plan-content table {
+        font-size: 0.9rem;
+    }
+    
+    .travel-plan-content h1 {
+        font-size: 1.8rem;
+    }
+    
+    .travel-plan-content h2 {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('travel-form').addEventListener('submit', function(e) {
+    // Show loading modal
+    const modal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    modal.show();
+    
+    // Disable the submit button
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating Your Plan...';
+});
+
+{% if show_results %}
+function copyToClipboard() {
+    const content = document.getElementById('travel-plan-content').innerText;
+    navigator.clipboard.writeText(content).then(function() {
+        // Show success message
+        const button = event.target.closest('button');
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-check me-1"></i>Copied!';
+        button.classList.remove('btn-outline-primary');
+        button.classList.add('btn-success');
+        
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.classList.remove('btn-success');
+            button.classList.add('btn-outline-primary');
+        }, 2000);
+    });
+}
+
+function printPlan() {
+    window.print();
+}
+
+function shareResults() {
+    const modal = new bootstrap.Modal(document.getElementById('shareModal'));
+    document.getElementById('shareUrl').value = window.location.href;
+    modal.show();
+}
+
+function copyShareUrl() {
+    const shareUrl = document.getElementById('shareUrl');
+    shareUrl.select();
+    shareUrl.setSelectionRange(0, 99999);
+    navigator.clipboard.writeText(shareUrl.value);
+    
+    const button = event.target.closest('button');
+    button.innerHTML = '<i class="fas fa-check"></i>';
+    setTimeout(() => {
+        button.innerHTML = '<i class="fas fa-copy"></i>';
+    }, 2000);
+}
+
+// Content is now properly processed on the backend
+document.addEventListener('DOMContentLoaded', function() {
+    // Add any additional client-side enhancements here if needed
+    console.log('Travel plan loaded successfully');
+});
+{% endif %}
+</script>
+{% endblock %}

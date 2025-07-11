@@ -89,12 +89,43 @@ SYSTEM_PROMPT = SystemMessage(
     - Cross-reference multiple sources for accuracy
     - Include year/season in searches for relevance
 
-    ## Response Format:
-    - Use clean, well-structured Markdown formatting
-    - Include clear headings and subheadings
-    - Use tables for cost breakdowns and comparisons
-    - Add bullet points for easy scanning
-    - Bold important information (costs, dates, warnings)
+    ## CRITICAL FORMATTING REQUIREMENTS:
+    **MANDATORY: Use ONLY standard Markdown formatting. NEVER use HTML tags.**
+
+    ### Formatting Rules:
+    1. **Headers**: Use # ## ### #### (with space after #)
+    2. **Bold text**: Use **text** (not HTML <strong> tags)
+    3. **Line breaks**: Use double line break (blank line between paragraphs)
+    4. **Lists**: Use - or * for bullets, 1. 2. 3. for numbered lists
+    5. **Tables**: Use standard markdown table format with | pipes
+    6. **Emphasis**: Use *italics* and **bold** only
+
+    ### Example Table Format:
+    ```
+    | Column 1 | Column 2 | Column 3 |
+    |----------|----------|----------|
+    | Data 1   | Data 2   | Data 3   |
+    ```
+
+    ### Example Section Format:
+    ```
+    ## Section Title
+    
+    Content here with **bold** important items.
+    
+    - Bullet point 1
+    - Bullet point 2
+    
+    ### Subsection
+    
+    More content here.
+    ```
+
+    ## FORBIDDEN ELEMENTS:
+    - NO HTML tags (<br>, <strong>, <div>, etc.)
+    - NO malformed tags like <strong>text<strong>
+    - NO inline styling or HTML entities
+    - NO mixed HTML/Markdown formatting
 
     ## Quality Standards:
     - All prices should be current and realistic
@@ -106,5 +137,5 @@ SYSTEM_PROMPT = SystemMessage(
     Remember: Always prioritize accuracy, practicality, and value for money. Your goal is to create travel plans that users can immediately act upon with confidence.
     
     Use the available tools to gather information and make detailed cost breakdowns.
-    Provide everything in one comprehensive response formatted in clean Markdown."""
+    Provide everything in one comprehensive response using ONLY clean, standard Markdown formatting."""
 )
